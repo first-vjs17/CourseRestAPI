@@ -36,6 +36,15 @@ route.get('/:courseId', (req,res) => {
     })
 })
 
+route.delete('/:courseId', (req,res) => {
+    Course.destroy({
+        where:{
+            id: req.params.courseId
+        }
+    })
+    .then( () => res.sendStatus(200) )
+})
+
 route.get('/:id/batches', (req,res) => {
     Batch.findAll({
         where:{
@@ -52,11 +61,20 @@ route.get('/:id/batches', (req,res) => {
     }) 
 })
 
-route.get('/:id/batches/:bid', (req,res) => {
+route.delete('/:id/batches', (req,res) => {
+    Batch.destroy({
+        where:{
+            id: req.params.id
+        }
+    })
+    .then( () => res.sendStatus(200) )
+})
+
+route.get('/:courseId/batches/:batchId', (req,res) => {
     Batch.findAll({
         where:{
-            courseId: req.params.id,
-            id: req.params.bid
+            courseId: req.params.courseId,
+            id: req.params.batchId
         }
     })
     .then( (batches) => {
@@ -72,7 +90,6 @@ route.get('/:id/batches/:bid', (req,res) => {
 
 route.get('/:courseId/batches/:batchId/lectures', (req, res) =>{
     Lecture.findAll({
-
         where : {
             BatchId : req.params.batchId
         },
@@ -82,8 +99,8 @@ route.get('/:courseId/batches/:batchId/lectures', (req, res) =>{
                 include:[Course]
             }
         ]
-    }).
-    then((course)=>{
+    })
+    .then((course)=>{
         res.status(200).send(course)
     })
     .catch((err)=>{
@@ -120,52 +137,64 @@ route.get('/:courseId/batches/:batchId/lectures/:lectureid', (req, res) =>{
     })
 });
 
-route.get('/:courseId/batches/:batchId/students', (req, res) =>{
-    Mapper.findAll({
-
-        where : {
-            BatchId : req.params.batchId
+route.get("/:courseId/batches/:batchId/students",(req, res) => {
+      let courseId = parseInt(req.params.courseId);
+      let batchId = parseInt(req.params.batchId);
+  
+      if (isNaN(courseId)) {
+        return res.status(403).send({
+          error: "Course Id is not a valid number"
+        });
+      }
+  
+      if (isNaN(batchId)) {
+        return res.status(403).send({
+          error: "Batch Id is not a valid number"
+        });
+      }
+  
+      Batch.findAll({
+        where: {
+          id: batchId,
+          courseId: courseId
         },
-        include: [Student,{
-
-                        model:Batch,
-                        include :[Course]
-                }],
-
-    })
-    .then((course)=>{
-        res.status(200).send(course)
-    })
-    .catch((err)=>{
-        console.log(err)
-        res.status(500).send({
-        error : "could not retrieve Course "
-    })
-    })
+  
+        include: [{ model: Student }]
+      }).then(studentBatches => {
+        res.status(200).send(studentBatches);
+      });
 });
+  
 
 route.get('/:courseId/batches/:batchId/teachers', (req, res) =>{
-    Lecture.findAll({
+    let courseId = parseInt(req.params.courseId);
+    let batchId = parseInt(req.params.batchId);
 
-        where : {
-            BatchId : req.params.batchId
+    if (isNaN(courseId)) {
+        return res.status(403).send({
+          error: "Course Id is not a valid number"
+        });
+    }
+  
+    if (isNaN(batchId)) {
+        return res.status(403).send({
+          error: "Batch Id is not a valid number"
+        });
+    }
+
+    Batch.findAll({
+        where: {
+            id: batchId,
+            courseId: courseId
         },
-        include: [Teacher,{
 
-                        model:Batch,
-                        include :[Course]
-                }],
-
-    }).
-    then((course)=>{
-        res.status(200).send(course)
+        include: [{
+            model: Teacher
+        }]
     })
-    .catch((err)=>{
-        console.log(err)
-        res.status(500).send({
-        error : "could not retrieve Course "
-    })
-    })
+    .then( teacherBatches => {
+        res.status(200).send(teacherBatches);
+    });
 });
 
 

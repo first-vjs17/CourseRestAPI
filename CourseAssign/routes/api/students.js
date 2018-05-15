@@ -72,5 +72,9 @@ route.put('/:id', (req,res) => {
     })
 })
 
+route.get('/:studentId/batches', (req,res) => {
+    
+})
+
 
 exports = module.exports = route
